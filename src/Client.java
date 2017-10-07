@@ -13,14 +13,17 @@ public class Client{
     private final int id;
     private static int count = 0;
     private final Exchanger<Message> exchanger;
+    private final LogList log;
 
-    public Client(Socket addr, String name){
+    public Client(Socket addr, String name) throws FileNotFoundException {
+        log = new LogList();
         socket = addr;
         this.name = name;
         id = count++;
         exchanger = new Exchanger<>();
         new Thread(new HandleEventsClientReceive(socket)).start();
         new Thread(new HandleEventsClientSend(socket)).start();
+        log.log(addr.getInetAddress().toString() + " " + name, "info");
     }
 
     public class HandleEventsClientReceive implements Runnable{
@@ -36,6 +39,10 @@ public class Client{
             try {
                 BufferedReader bf = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 while (true) {
+                    if(!socket.isConnected()){
+                        socket.close();
+                        log.log(socket.getInetAddress(), "close");
+                    }
                     if(bf.ready()) {
                         message = new Message(bf.readLine());
                         exchanger.exchange(message);
@@ -43,6 +50,7 @@ public class Client{
                     }
                 }
             } catch (IOException | InterruptedException e) {
+                System.out.println("exit");
                 e.printStackTrace();
             }
         }

@@ -16,4 +16,8 @@ public class ClientConnections {
     public boolean addClient(Client client){
         return clients.add(client);
     }
+
+    public int size(){
+        return clients.size();
+    }
 }
