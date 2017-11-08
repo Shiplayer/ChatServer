@@ -21,30 +21,31 @@ public class Client{
         this.name = name;
         id = count++;
         exchanger = new Exchanger<>();
-        new Thread(new HandleEventsClientReceive(socket)).start();
-        new Thread(new HandleEventsClientSend(socket)).start();
+        new Thread(new HandleEventsClientReceive()).start();
+        new Thread(new HandleEventsClientSend()).start();
         log.log(addr.getInetAddress().toString() + " " + name, "info");
     }
 
     public class HandleEventsClientReceive implements Runnable{
-        private Socket socket;
+
         Message message;
 
-        public HandleEventsClientReceive(Socket socket) {
-            this.socket = socket;
+        public HandleEventsClientReceive() {
+
         }
 
         @Override
         public void run() {
             try {
+                String buf;
                 BufferedReader bf = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 while (true) {
                     if(!socket.isConnected()){
                         socket.close();
                         log.log(socket.getInetAddress(), "close");
                     }
-                    if(bf.ready()) {
-                        message = new Message(bf.readLine());
+                    if((buf = bf.readLine()) != null) {
+                        message = new Message(buf);
                         exchanger.exchange(message);
                         System.err.println("message is receiving");
                     }
@@ -57,28 +58,30 @@ public class Client{
     }
 
     public class HandleEventsClientSend implements Runnable{
-        private Socket socket;
         Message message;
 
-        public HandleEventsClientSend(Socket socket) {
-            this.socket = socket;
+        public HandleEventsClientSend() {
+
         }
 
         @Override
         public void run() {
             try {
-                PrintWriter pw = new PrintWriter(socket.getOutputStream());
+                PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
                 System.err.println("send: " + socket.getInetAddress().getHostName());
                 while (true) {
+                    System.out.println("wait");
                     message = exchanger.exchange(message);
+                    System.out.println("msg");
                     if(!message.isEmpty()){
-                        pw.println(message.getText());
+                        pw.print(message.getText() + "\n");
                         System.err.println("message is sending");
                         System.err.println("send: text = " + message.getText());
                         pw.flush();
                     }
                 }
             } catch (IOException | InterruptedException e) {
+                System.out.println("error");
                 e.printStackTrace();
             }
         }
