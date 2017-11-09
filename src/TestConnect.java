@@ -12,6 +12,32 @@ public class TestConnect {
     }
 
     private void run() throws IOException {
+        Socket socket = new Socket("localhost", 44579);
+        new Thread(() -> {
+            try(BufferedReader bf = new BufferedReader(new InputStreamReader(socket.getInputStream()))){
+                String line;
+                while((line = bf.readLine()) != null){
+                    System.out.println("From server: " + line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+
+        try( BufferedReader bfCMD = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter pw = new PrintWriter(socket.getOutputStream(), true)){
+            String line;
+            while((line = bfCMD.readLine()) != null){
+                pw.println(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        socket.close();
+
+    }
+
+    private void run_prev() throws IOException {
         final Socket socket = new Socket(InetAddress.getByName("localhost"), 44579);
         //Socket socket = new Socket(InetAddress.getByName("localhost"), 4405);
         BufferedReader bfCMD = new BufferedReader(new InputStreamReader(System.in));
@@ -19,7 +45,7 @@ public class TestConnect {
         PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
         BufferedReader bf = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         //OutputStreamWriter osw = new OutputStreamWriter(socket.getOutputStream());
-        new Thread(() -> {
+        /*new Thread(() -> {
             try {
                 String line;
                 SocketChannel socketChannel = socket.getChannel();
@@ -34,7 +60,18 @@ public class TestConnect {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }).start();
+        }).start();*/
+        String line = null;
+/*        do{
+            if(line == null){
+                line = bfCMD.readLine();
+                pw.println(line);
+            } else {
+                System.out.println(line);
+                line = bfCMD.readLine();
+                //pw.println()
+            }
+        }
         while(!(cmd = bfCMD.readLine()).equals("exit")) {
             pw = new PrintWriter(socket.getOutputStream(), true);
             pw.println(cmd);
@@ -42,9 +79,8 @@ public class TestConnect {
 
             //osw.write(cmd, 0, cmd.length());
             //osw.flush();
-            pw.close();
             System.out.println("next cmd");
-        }
+        }*/
         socket.close();
     }
 }
